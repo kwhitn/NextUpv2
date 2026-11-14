@@ -891,10 +891,11 @@
         try {
           const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
           return {
-            householdEnabled: typeof parsed.householdEnabled === "boolean" ? parsed.householdEnabled : false
+            householdEnabled: typeof parsed.householdEnabled === "boolean" ? parsed.householdEnabled : false,
+            showScores: typeof parsed.showScores === "boolean" ? parsed.showScores : false
           };
         } catch {
-          return { householdEnabled: false };
+          return { householdEnabled: false, showScores: false };
         }
       }
 
@@ -931,9 +932,11 @@
       }
 
       function App() {
+        const settings = readSettings();
         const state = {
           tasks: readTasks(),
-          householdEnabled: readSettings().householdEnabled,
+          householdEnabled: settings.householdEnabled,
+          showScores: settings.showScores,
           sortMode: "score",
           groupBySubject: false,
           name: "",
@@ -968,12 +971,22 @@
 
         function persistSettings() {
           try {
-            localStorage.setItem(SETTINGS_KEY, JSON.stringify({ householdEnabled: state.householdEnabled }));
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+              householdEnabled: state.householdEnabled,
+              showScores: state.showScores
+            }));
           } catch {
+            // ignore
           }
         }
 
         function update() {
+          render();
+        }
+
+        function setTaskData(nextTasks) {
+          state.tasks = nextTasks;
+          saveState();
           render();
         }
 
@@ -1239,7 +1252,7 @@
                   <div class='nu-bars-row'><span class='nu-bars-cap'>EFF</span>${Segments({ filled: effortInfo.value, tone: "green" })}</div>
                 </div>
                 <div class='nu-score'>
-                  <div class='nu-score-num'>${score}</div>
+                  <div class='nu-score-num'>${state.showScores ? score : "—"}</div>
                   <div class='nu-score-label'>score</div>
                 </div>
                 <div class='nu-actions'>
@@ -1498,6 +1511,7 @@
                     <button class='nu-sort-btn ${state.sortMode === "effort-asc" ? "active" : ""}' data-action='sort' data-mode='effort-asc'>Least effort first</button>
                   </div>
                   <button class='nu-group-toggle ${state.groupBySubject ? "active" : ""}' data-action='toggle-group'>Group by subject</button>
+                  <button class='nu-group-toggle ${state.showScores ? "active" : ""}' data-action='toggle-scores'>${state.showScores ? "Hide scores" : "Show scores"}</button>
                 </div>
               ` : ""}
 
@@ -1568,6 +1582,14 @@
           document.querySelectorAll("[data-action='toggle-group']").forEach(button => {
             button.addEventListener("click", () => {
               state.groupBySubject = !state.groupBySubject;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-scores']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.showScores = !state.showScores;
+              persistSettings();
               render();
             });
           });
