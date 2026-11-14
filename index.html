@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NextUp</title>
+    <style>
+      :root {
+        --bg: #303e34;
+        --panel: #39483d;
+        --panel-alt: #49584a;
+        --task-hover: #546556;
+        --border: #5a695a;
+        --text: #edf2ec;
+        --muted: #bbc7ba;
+        --dim: #a0aea0;
+        --amber: #a1c9a2;
+        --amber-ink: #26372a;
+        --green: #91bd98;
+        --success: #7ecb91;
+        --danger: #ee8b82;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; }
+      body { padding: 1rem; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+      #app { width: min(100%, 900px); margin: 0 auto; }
+
+      .nu-app {
+        width: min(100%, 900px);
+        margin: 0 auto;
+        padding: 1.5rem;
+        border-radius: 8px;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .nu-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nu-title {
+        margin: 0;
+        font-size: 2.6rem;
+        line-height: 1;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .nu-title span {
+        color: var(--amber);
+      }
+
+      .nu-subtitle {
+        margin: 0.25rem 0 0;
+        color: var(--muted);
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .nu-stats {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .nu-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 56px;
+      }
+
+      .nu-stat-num {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+
+      .nu-stat-danger .nu-stat-num { color: var(--danger); }
+      .nu-stat-label {
+        margin-top: 0.1rem;
+        color: var(--dim);
+        font-size: 0.6rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .nu-panel, .nu-household-panel {
+        margin-bottom: 1rem;
+        padding: 1.1rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--panel);
+      }
+
+      .nu-household-panel {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .nu-household-title {
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+
+      .nu-household-sub {
+        margin-top: 0.15rem;
+        max-width: 480px;
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      .nu-household-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .nu-switch {
+        position: relative;
+        width: 40px;
+        height: 22px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        background: var(--panel-alt);
+        padding: 0;
+      }
+
+      .nu-switch.on {
+        border-color: var(--green);
+        background: var(--green);
+      }
+
+      .nu-switch-knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        transition: left 0.15s ease-out;
+      }
+
+      .nu-switch.on .nu-switch-knob { left: 20px; }
+
+      .nu-field-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 0.75rem;
+      }
+
+      .nu-field {
+        display: flex;
+        flex: 1 1 150px;
+        flex-direction: column;
+        gap: 0.3rem;
+        min-width: 120px;
+      }
+
+      .nu-field-name { flex: 2 1 200px; }
+
+      .nu-label, .nu-sort-label {
+        color: var(--muted);
+        font-size: 0.62rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .nu-input {
+        width: 100%;
+        padding: 0.55rem 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: #2b382f;
+        color: var(--text);
+        font-size: 0.9rem;
+      }
+
+      .nu-input-sm { padding: 0.4rem 0.55rem; font-size: 0.82rem; }
+      .nu-input::placeholder { color: var(--dim); }
+
+      .nu-btn {
+        padding: 0.6rem 1rem;
+        border: 0;
+        border-radius: 3px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .nu-btn-primary {
+        background: var(--amber);
+        color: var(--amber-ink);
+      }
+
+      .nu-form-error, .nu-save-error {
+        padding: 0.65rem 0.8rem;
+        border: 1px solid var(--danger);
+        border-left-width: 4px;
+        border-radius: 3px;
+        background: #512f31;
+        color: #fff1ef;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .nu-form-error { margin-top: 0.65rem; }
+      .nu-save-error { margin-bottom: 0.75rem; }
+
+      .nu-start {
+        margin-bottom: 1rem;
+        padding: 1.1rem 1.2rem;
+        border: 1px solid var(--green);
+        border-left-width: 5px;
+        border-radius: 4px;
+        background: var(--panel);
+      }
+
+      .nu-start-top {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .nu-start-badge {
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        background: var(--amber);
+        color: var(--amber-ink);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .nu-start-label {
+        color: var(--muted);
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .nu-start-headline {
+        margin: 0 0 0.35rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .nu-start-reason, .nu-start-next {
+        margin: 0 0 0.4rem;
+        font-size: 0.95rem;
+        line-height: 1.45;
+        color: var(--text);
+      }
+
+      .nu-start-next { color: var(--muted); }
+
+      .nu-start-note {
+        margin: 0.5rem 0 0;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid var(--danger);
+        border-left-width: 4px;
+        border-radius: 3px;
+        background: #512f31;
+        color: #fff1ef;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .nu-start-foot {
+        margin: 0.6rem 0 0;
+        color: var(--dim);
+        font-size: 0.78rem;
+      }
+
+      .nu-start-how {
+        margin-top: 0.5rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      .nu-start-how summary { cursor: pointer; color: var(--amber); }
+      .nu-howto { margin-bottom: 1rem; padding: 0.8rem 1.1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--panel); color: var(--muted); font-size: 0.88rem; }
+      .nu-howto summary { cursor: pointer; color: var(--amber); font-weight: 600; }
+      .nu-howto ol { margin: 0.6rem 0 0.4rem 1.2rem; padding: 0; line-height: 1.5; color: var(--text); }
+      .nu-howto p { margin: 0.4rem 0 0; line-height: 1.45; }
+      .nu-form-note { margin: 0.65rem 0 0; color: var(--muted); font-size: 0.82rem; }
+      .nu-start-how p { margin: 0.4rem 0 0; line-height: 1.45; }
+
+      .nu-sort-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .nu-sort-toggle {
+        display: flex;
+        overflow: auto hidden;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        background: var(--panel-alt);
+      }
+
+      .nu-sort-btn, .nu-group-toggle {
+        padding: 0.45rem 0.75rem;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.76rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .nu-sort-btn.active {
+        background: var(--amber);
+        color: var(--amber-ink);
+      }
+
+      .nu-group-toggle {
+        border: 1px solid var(--border);
+        border-radius: 3px;
+      }
+
+      .nu-group-toggle.active {
+        border-color: var(--green);
+        background: var(--green);
+        color: #17351f;
+      }
+
+      .nu-list { display: flex; flex-direction: column; }
+
+      .nu-task-row {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) auto auto auto;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.85rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel-alt);
+        transition: background-color 0.15s ease-out;
+      }
+
+      .nu-task-wrap:hover .nu-task-row { background: var(--task-hover); }
+
+      .nu-rank {
+        text-align: center;
+        color: var(--dim);
+        font-weight: 700;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 1.3rem;
+      }
+
+      .nu-rank-top { color: var(--amber); }
+
+      .nu-main { min-width: 0; }
+
+      .nu-name-btn {
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        background: none;
+        border: 0;
+        padding: 0;
+        color: inherit;
+        text-align: left;
+        width: 100%;
+      }
+
+      .nu-caret {
+        color: var(--dim);
+        font-size: 0.7rem;
+      }
+
+      .nu-task-name {
+        color: var(--text);
+        font-size: 0.95rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+
+      .nu-meta-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-top: 0.2rem;
+      }
+
+      .nu-due {
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .nu-due-urgent { color: var(--amber); }
+      .nu-due-overdue { color: var(--danger); }
+
+      .nu-subtask-count {
+        color: var(--dim);
+        font-size: 0.68rem;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      .nu-tag {
+        display: inline-block;
+        padding: 0.1rem 0.45rem;
+        border: 1px solid;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 600;
+      }
+
+      .nu-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .nu-bars-row {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .nu-bars-cap {
+        width: 22px;
+        color: var(--dim);
+        font-size: 0.55rem;
+      }
+
+      .nu-segs { display: flex; gap: 2px; }
+      .nu-seg {
+        width: 8px;
+        height: 8px;
+        border-radius: 1px;
+        background: #526152;
+      }
+      .nu-seg-on.nu-seg-amber { background: var(--amber); }
+      .nu-seg-on.nu-seg-green { background: var(--green); }
+
+      .nu-score { text-align: center; }
+      .nu-score-num {
+        color: var(--text);
+        font-weight: 700;
+        font-size: 1.15rem;
+        font-family: "IBM Plex Mono", monospace;
+      }
+      .nu-score-label { color: var(--dim); font-size: 0.55rem; }
+
+      .nu-actions, .nu-completed-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .nu-checkbox { width: 18px; height: 18px; accent-color: var(--success); }
+      .nu-checkbox-sm { width: 15px; height: 15px; }
+
+      .nu-icon-btn {
+        padding: 0.3rem 0.5rem;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: var(--muted);
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .nu-icon-btn-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .nu-edit-row {
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 0.9rem;
+        align-items: start;
+        padding: 0.85rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--panel-alt);
+      }
+
+      .nu-edit-fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .nu-edit-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.6rem;
+      }
+
+      .nu-subtask-panel {
+        padding: 0.6rem 0.75rem 0.9rem 3.05rem;
+        border-bottom: 1px solid var(--border);
+        background: #364a3b;
+      }
+
+      .nu-subtask-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .nu-subtask-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+      }
+
+      .nu-subtask-done {
+        color: var(--dim);
+        text-decoration: line-through;
+      }
+
+      .nu-subtask-del {
+        padding: 0 0.2rem;
+        border: 0;
+        background: none;
+        color: var(--dim);
+        font-size: 0.9rem;
+      }
+
+      .nu-subtask-add {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        max-width: 360px;
+      }
+
+      .nu-empty {
+        padding: 2.5rem 1rem;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .nu-empty-title, .nu-group-name {
+        color: var(--text);
+        font-family: "Big Shoulders Display", sans-serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .nu-empty-sub {
+        margin-top: 0.35rem;
+        font-size: 0.85rem;
+      }
+
+      .nu-section-toggle {
+        width: 100%;
+        margin-top: 0.5rem;
+        padding: 0.6rem 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--panel);
+        color: var(--muted);
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .nu-completed-list { margin-top: 0.4rem; }
+
+      .nu-completed-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        color: var(--dim);
+      }
+
+      .nu-completed-main {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .nu-completed-name {
+        font-size: 0.88rem;
+        text-decoration: line-through;
+      }
+
+      .nu-completed-actual {
+        font-size: 0.68rem;
+      }
+
+      .nu-actual-link, .nu-actual-set {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--dim);
+        font-size: 0.68rem;
+      }
+
+      .nu-actual-link { text-decoration: underline dotted; }
+      .nu-actual-set { font-family: "IBM Plex Mono", monospace; }
+
+      .nu-insights-body {
+        margin-top: -0.5rem;
+        padding: 0.8rem 0.9rem;
+        border: 1px solid var(--border);
+        border-top: 0;
+        border-radius: 0 0 4px 4px;
+        background: var(--panel);
+      }
+
+      .nu-insights-summary {
+        margin-bottom: 0.6rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .nu-insights-row {
+        padding: 0.2rem 0;
+        color: var(--dim);
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem;
+      }
+
+      .nu-group-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1rem 0 0.35rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .nu-group-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .nu-group-name {
+        font-size: 1.05rem;
+      }
+
+      .nu-group-count {
+        color: var(--dim);
+        font-size: 0.68rem;
+        font-family: "IBM Plex Mono", monospace;
+      }
+
+      @media (max-width: 680px) {
+        .nu-app { padding: 1rem; }
+        .nu-header { align-items: flex-start; }
+        .nu-stats { width: 100%; justify-content: space-between; }
+        .nu-task-row {
+          grid-template-columns: 32px minmax(0, 1fr) auto;
+          grid-template-areas:
+            "rank main score"
+            "rank bars score"
+            "rank actions actions";
+          row-gap: 0.5rem;
+        }
+        .nu-rank { grid-area: rank; }
+        .nu-main { grid-area: main; }
+        .nu-bars { grid-area: bars; flex-direction: row; gap: 0.9rem; }
+        .nu-score { grid-area: score; display: block; align-self: center; }
+        .nu-sort-toggle { flex-wrap: wrap; overflow: visible; }
+        .nu-sort-btn { flex: 1 1 auto; }
+        .nu-actions { grid-area: actions; }
+        .nu-subtask-panel { padding-left: 0.75rem; }
+        .nu-title { font-size: 2.1rem; }
+        .nu-field-row > .nu-btn { width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      const EFFORT_LEVELS = [
+        { value: 1, label: "Quick", hint: "~15 min" },
+        { value: 2, label: "Light", hint: "30 min–1 hr" },
+        { value: 3, label: "Medium", hint: "1–2 hrs" },
+        { value: 4, label: "Heavy", hint: "2–3 hrs" },
+        { value: 5, label: "Huge", hint: "3+ hrs" }
+      ];
+
+      const SUBJECT_PALETTE = ["#a8d5aa", "#ceda8b", "#8bd2b9", "#e3c17d", "#d2a5d0", "#e1a28b"];
+      const HOUSEHOLD_COLOR = "#91c69a";
+      const STORAGE_KEY = "nextup-tasks";
+      const SETTINGS_KEY = "nextup-settings";
+
+      function buildHouseholdPreset() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const makeTask = (name, offsetDays, effort) => {
+          const due = new Date(today);
+          due.setDate(due.getDate() + offsetDays);
+          return {
+            id: `hh-${name.toLowerCase().replace(/\s+/g, "-")}`,
+            name,
+            subject: "Household",
+            dueDate: due.getFullYear() + "-" + String(due.getMonth() + 1).padStart(2, "0") + "-" + String(due.getDate()).padStart(2, "0"),
+            effort,
+            household: true,
+            completed: false,
+            subtasks: [],
+            actualEffort: null,
+            createdAt: Date.now()
+          };
+        };
+
+        return [
+          makeTask("Wash dishes", 0, 1),
+          makeTask("Wipe kitchen counters", 1, 2),
+          makeTask("Take out trash", 1, 1),
+          makeTask("Clean bathroom", 2, 4),
+          makeTask("Vacuum living areas", 3, 3),
+          makeTask("Mop floors", 4, 3),
+          makeTask("Laundry", 4, 2),
+          makeTask("Dust surfaces", 5, 2),
+          makeTask("Change bed sheets", 6, 2)
+        ];
+      }
+
+      function effortMeta(value) {
+        return EFFORT_LEVELS.find(item => item.value === Number(value)) || EFFORT_LEVELS[2];
+      }
+
+      function daysUntil(dueDate) {
+        const due = new Date(`${dueDate}T00:00:00`);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Math.round((due - today) / 86400000);
+      }
+
+      function urgencyBucket(days) {
+        if (days <= 0) return 5;
+        if (days <= 2) return 4;
+        if (days <= 4) return 3;
+        if (days <= 7) return 2;
+        return 1;
+      }
+
+      function computeScore(task) {
+        return urgencyBucket(daysUntil(task.dueDate)) * 5 + Number(task.effort);
+      }
+
+      function dueLabel(days) {
+        if (days < 0) return `OVERDUE · ${Math.abs(days)}D`;
+        if (days === 0) return "DUE TODAY";
+        if (days === 1) return "DUE TOMORROW";
+        return `DUE IN ${days}D`;
+      }
+
+      function sortTasks(tasks, mode) {
+        return [...tasks].sort((a, b) => {
+          if (mode === "effort-desc") {
+            if (b.effort !== a.effort) return b.effort - a.effort;
+            return computeScore(b) - computeScore(a);
+          }
+          if (mode === "effort-asc") {
+            if (a.effort !== b.effort) return a.effort - b.effort;
+            return computeScore(b) - computeScore(a);
+          }
+          const scoreDifference = computeScore(b) - computeScore(a);
+          return scoreDifference || new Date(a.dueDate) - new Date(b.dueDate);
+        });
+      }
+
+      function plural(n, word) {
+        return n + " " + word + (n === 1 ? "" : "s");
+      }
+
+      function dueText(days) {
+        if (days < -365) return "overdue by more than a year";
+        if (days < 0) return "overdue by " + plural(Math.abs(days), "day");
+        if (days === 0) return "due today";
+        if (days === 1) return "due tomorrow";
+        return "due in " + plural(days, "day");
+      }
+
+      function effortPhrase(effort) {
+        if (effort.label === "Quick") return "is a quick task (" + effort.hint + ")";
+        if (effort.label === "Huge") return "is a big job (" + effort.hint + ")";
+        return "takes " + effort.label.toLowerCase() + " effort (" + effort.hint + ")";
+      }
+
+      function isVagueName(name) {
+        const clean = (name || "").trim().toLowerCase();
+        if (clean.length < 4 || /^(stuff|things?|work|misc|task|tasks|todo|homework|hw|assignment)$/.test(clean)) return true;
+        const letters = clean.replace(/[^a-z]/g, "");
+        if (!letters.length) return true;
+        if (/(.)\1\1/.test(clean)) return true;
+        if (letters.length >= 5 && !/[aeiouy]/.test(letters)) return true;
+        const rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+        for (const row of rows) {
+          const backwards = row.split("").reverse().join("");
+          for (let i = 0; i + 5 <= row.length; i++) {
+            if (clean.includes(row.slice(i, i + 5)) || clean.includes(backwards.slice(i, i + 5))) return true;
+          }
+        }
+        return false;
+      }
+
+      function asksForAdvice(name) {
+        return /\b(ignore (your|the|all|previous) (rules|instructions)|tell me (which|what|how|if)|should i|what should i|can you (tell|give|recommend))\b/i.test(name || "");
+      }
+
+      function buildStartHere(activeTasks) {
+        if (!activeTasks.length) return null;
+        const ranked = sortTasks(activeTasks, "score");
+        const top = ranked[0];
+        const topDays = daysUntil(top.dueDate);
+        const topScore = computeScore(top);
+        const effort = effortMeta(top.effort);
+        const second = ranked[1];
+
+        let reason;
+        if (!second) {
+          reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ", and it's the only task on your board, so start there.";
+        } else if (computeScore(second) === topScore) {
+          const sameDate = second.dueDate === top.dueDate;
+          reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ". It ties with “" + second.name + "” on priority score, " +
+            (sameDate ? "and both are due the same day, so I kept the order they appear in your list." : "but it's due earlier, so it goes first.");
+        } else {
+          reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ", which gives it the highest priority on your board.";
+        }
+
+        const nextTasks = ranked.slice(1, 3).map(task => ({ name: task.name, due: dueText(daysUntil(task.dueDate)) }));
+
+        const notes = [];
+        ranked.slice(0, 3).forEach(task => {
+          if (daysUntil(task.dueDate) < -365) {
+            notes.push("Check the due date for “" + task.name + "”. It's more than a year in the past, which may be a typo. Use Edit to fix it.");
+          }
+          if (asksForAdvice(task.name)) {
+            notes.push("“" + task.name + "” reads like a question or a request, not a task. NextUp cannot give that kind of advice, so please rename it if this is a task.");
+          } else if (isVagueName(task.name)) {
+            notes.push("“" + task.name + "” is a vague task name. A clearer name makes this suggestion easier to trust.");
+          }
+        });
+
+        return { headline: "Start with “" + top.name + "”", reason, nextTasks, notes, onlyChores: ranked.every(task => task.household) };
+      }
+
+      function normalizeTask(task) {
+        return {
+          ...task,
+          subject: task.subject || "",
+          subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+          actualEffort: task.actualEffort || null,
+          household: !!task.household
+        };
+      }
+
+      function readTasks() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw).map(normalizeTask) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function readSettings() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+          return {
+            householdEnabled: typeof parsed.householdEnabled === "boolean" ? parsed.householdEnabled : false
+          };
+        } catch {
+          return { householdEnabled: false };
+        }
+      }
+
+      function makeId() {
+        if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+        return `t-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      }
+
+      function subjectColor(subject) {
+        const value = subject && subject.trim() ? subject.trim() : "General";
+        if (value.toLowerCase() === "household") return HOUSEHOLD_COLOR;
+        let hash = 0;
+        for (let i = 0; i < value.length; i++) {
+          hash = value.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return SUBJECT_PALETTE[Math.abs(hash) % SUBJECT_PALETTE.length];
+      }
+
+      function Segments({ filled, tone }) {
+        return (
+          "<div class='nu-segs' aria-hidden='true'>" +
+          [1, 2, 3, 4, 5].map(level => {
+            const active = level <= filled ? `nu-seg-on nu-seg-${tone}` : "";
+            return `<span class='nu-seg ${active}'></span>`;
+          }).join("") +
+          "</div>"
+        );
+      }
+
+      function SubjectTag(subject) {
+        if (!subject || !subject.trim()) return "";
+        const color = subjectColor(subject);
+        return `<span class='nu-tag' style='color:${color}; border-color:${color}77; background:${color}22;'>${subject.trim()}</span>`;
+      }
+
+      function App() {
+        const state = {
+          tasks: readTasks(),
+          householdEnabled: readSettings().householdEnabled,
+          sortMode: "score",
+          groupBySubject: false,
+          name: "",
+          subject: "",
+          dueDate: "",
+          effort: 3,
+          formError: "",
+          editError: "",
+          saveError: false,
+          editingId: null,
+          editDraft: { name: "", subject: "", dueDate: "", effort: 3 },
+          subtaskDraft: {},
+          showCompleted: false,
+          showInsights: false,
+          editingActualId: null,
+          confirmDeleteId: null,
+          expanded: {},
+          search: ""
+        };
+
+        const root = document.getElementById("app");
+        let confirmTimer = null;
+
+        function saveState() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+            state.saveError = false;
+          } catch {
+            state.saveError = true;
+          }
+        }
+
+        function persistSettings() {
+          try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify({ householdEnabled: state.householdEnabled }));
+          } catch {
+          }
+        }
+
+        function update() {
+          render();
+        }
+
+        function dateProblem(value) {
+          const days = daysUntil(value);
+          if (days < -365) return "That date is more than a year in the past. Check the year, and use four digits like 2026.";
+          if (days > 730) return "That date is more than two years away. Check the year, and use four digits like 2026.";
+          return "";
+        }
+
+        function sensitiveProblem(text) {
+          const value = text || "";
+          if (/\b\d{3}-\d{2}-\d{4}\b/.test(value) || /\b(?:\d[ -]?){13,16}\b/.test(value)) {
+            return "That looks like a private number. NextUp does not need it, so please remove it.";
+          }
+          return "";
+        }
+
+        function handleAdd() {
+          if (!state.name.trim()) {
+            state.formError = "Give the assignment a name.";
+            render();
+            return;
+          }
+          if (!state.dueDate) {
+            state.formError = "Pick a due date.";
+            render();
+            return;
+          }
+          const privateIssue = sensitiveProblem(state.name) || sensitiveProblem(state.subject);
+          if (privateIssue) {
+            state.formError = privateIssue;
+            render();
+            return;
+          }
+          const dateIssue = dateProblem(state.dueDate);
+          if (dateIssue) {
+            state.formError = dateIssue;
+            render();
+            return;
+          }
+
+          state.formError = "";
+          state.tasks = [
+            ...state.tasks,
+            {
+              id: makeId(),
+              name: state.name.trim(),
+              subject: state.subject.trim(),
+              dueDate: state.dueDate,
+              effort: Number(state.effort),
+              completed: false,
+              subtasks: [],
+              actualEffort: null,
+              household: false,
+              createdAt: Date.now()
+            }
+          ];
+          state.name = "";
+          state.subject = "";
+          state.dueDate = "";
+          state.effort = 3;
+          saveState();
+          render();
+        }
+
+        function toggleComplete(taskId) {
+          state.tasks = state.tasks.map(task =>
+            task.id === taskId ? { ...task, completed: !task.completed } : task
+          );
+          saveState();
+          render();
+        }
+
+        function requestDelete(taskId) {
+          if (state.confirmDeleteId === taskId) {
+            clearTimeout(confirmTimer);
+            state.confirmDeleteId = null;
+            state.tasks = state.tasks.filter(task => task.id !== taskId);
+            saveState();
+            render();
+            return;
+          }
+
+          state.confirmDeleteId = taskId;
+          clearTimeout(confirmTimer);
+          confirmTimer = setTimeout(() => {
+            state.confirmDeleteId = null;
+            render();
+          }, 3000);
+          render();
+        }
+
+        function startEdit(task) {
+          state.editingId = task.id;
+          state.editError = "";
+          state.editDraft = {
+            name: task.name,
+            subject: task.subject || "",
+            dueDate: task.dueDate,
+            effort: task.effort
+          };
+          render();
+        }
+
+        function saveEdit() {
+          if (!state.editDraft.name.trim() || !state.editDraft.dueDate) return;
+          const editIssue = sensitiveProblem(state.editDraft.name) || sensitiveProblem(state.editDraft.subject) || dateProblem(state.editDraft.dueDate);
+          if (editIssue) {
+            state.editError = editIssue;
+            render();
+            return;
+          }
+          state.editError = "";
+          state.tasks = state.tasks.map(task =>
+            task.id === state.editingId
+              ? {
+                  ...task,
+                  name: state.editDraft.name.trim(),
+                  subject: state.editDraft.subject.trim(),
+                  dueDate: state.editDraft.dueDate,
+                  effort: Number(state.editDraft.effort)
+                }
+              : task
+          );
+          state.editingId = null;
+          saveState();
+          render();
+        }
+
+        function addSubtask(taskId) {
+          const text = (state.subtaskDraft[taskId] || "").trim();
+          if (!text) return;
+
+          state.tasks = state.tasks.map(task =>
+            task.id === taskId
+              ? { ...task, subtasks: [...task.subtasks, { id: makeId(), text, done: false }] }
+              : task
+          );
+
+          state.subtaskDraft[taskId] = "";
+          saveState();
+          render();
+        }
+
+        function toggleSubtask(taskId, subId) {
+          state.tasks = state.tasks.map(task =>
+            task.id === taskId
+              ? {
+                  ...task,
+                  subtasks: task.subtasks.map(subtask =>
+                    subtask.id === subId ? { ...subtask, done: !subtask.done } : subtask
+                  )
+                }
+              : task
+          );
+          saveState();
+          render();
+        }
+
+        function deleteSubtask(taskId, subId) {
+          state.tasks = state.tasks.map(task =>
+            task.id === taskId
+              ? { ...task, subtasks: task.subtasks.filter(subtask => subtask.id !== subId) }
+              : task
+          );
+          saveState();
+          render();
+        }
+
+        function setActualEffort(taskId, value) {
+          state.tasks = state.tasks.map(task =>
+            task.id === taskId ? { ...task, actualEffort: Number(value) } : task
+          );
+          state.editingActualId = null;
+          saveState();
+          render();
+        }
+
+        function toggleHousehold() {
+          state.householdEnabled = !state.householdEnabled;
+          persistSettings();
+
+          if (state.householdEnabled && !state.tasks.some(task => task.household)) {
+            state.tasks = [...state.tasks, ...buildHouseholdPreset()];
+            saveState();
+          }
+
+          render();
+        }
+
+        function resetHousehold() {
+          state.tasks = [...state.tasks.filter(task => !task.household), ...buildHouseholdPreset()];
+          saveState();
+          render();
+        }
+
+        function renderTaskRow(task, index, sortedTasks) {
+          const days = daysUntil(task.dueDate);
+          const urgency = urgencyBucket(days);
+          const effortInfo = effortMeta(task.effort);
+          const score = computeScore(task);
+          const doneCount = task.subtasks.filter(s => s.done).length;
+          const rank = sortedTasks.findIndex(item => item.id === task.id) + 1;
+
+          if (state.editingId === task.id) {
+            return `
+              <div class='nu-edit-row' data-id='${task.id}'>
+                <div class='nu-rank'>${rank}</div>
+                <div>
+                  <div class='nu-edit-fields'>
+                    <div class='nu-field nu-field-name'>
+                      <label class='nu-label'>Assignment</label>
+                      <input class='nu-input' value='${escapeHtml(state.editDraft.name)}' data-action='edit-name'>
+                    </div>
+                    <div class='nu-field'>
+                      <label class='nu-label'>Subject</label>
+                      <input class='nu-input' list='nu-subjects' value='${escapeHtml(state.editDraft.subject)}' data-action='edit-subject'>
+                    </div>
+                    <div class='nu-field'>
+                      <label class='nu-label'>Due date</label>
+                      <input class='nu-input' type='date' value='${state.editDraft.dueDate}' data-action='edit-date'>
+                    </div>
+                    <div class='nu-field'>
+                      <label class='nu-label'>Effort</label>
+                      <select class='nu-input' data-action='edit-effort'>
+                        ${EFFORT_LEVELS.map(item => `
+                          <option value='${item.value}' ${item.value === Number(state.editDraft.effort) ? "selected" : ""}>
+                            ${item.label} · ${item.hint}
+                          </option>
+                        `).join("")}
+                      </select>
+                    </div>
+                  </div>
+                  ${state.editError ? `<div class='nu-form-error' role='alert'>${state.editError}</div>` : ""}
+                  <div class='nu-edit-actions'>
+                    <button class='nu-btn nu-btn-primary' data-action='save-edit'>Save</button>
+                    <button class='nu-icon-btn' data-action='cancel-edit'>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          const expanded = !!state.expanded[task.id];
+          return `
+            <div class='nu-task-wrap'>
+              <div class='nu-task-row' style='animation-delay:${index * 35}ms'>
+                <div class='nu-rank ${rank <= 3 ? "nu-rank-top" : ""}'>${rank}</div>
+                <div class='nu-main'>
+                  <button class='nu-name-btn' data-action='toggle-expand' data-id='${task.id}'>
+                    <span class='nu-caret'>${expanded ? "▾" : "▸"}</span>
+                    <span class='nu-task-name'>${escapeHtml(task.name)}</span>
+                  </button>
+                  <div class='nu-meta-row'>
+                    <span class='nu-due ${days < 0 ? "nu-due-overdue" : urgency >= 4 ? "nu-due-urgent" : ""}'>${dueLabel(days)}</span>
+                    ${SubjectTag(task.subject)}
+                    ${task.subtasks.length > 0 ? `<span class='nu-subtask-count'>${doneCount}/${task.subtasks.length} done</span>` : ""}
+                  </div>
+                </div>
+                <div class='nu-bars'>
+                  <div class='nu-bars-row'><span class='nu-bars-cap'>URG</span>${Segments({ filled: urgency, tone: "amber" })}</div>
+                  <div class='nu-bars-row'><span class='nu-bars-cap'>EFF</span>${Segments({ filled: effortInfo.value, tone: "green" })}</div>
+                </div>
+                <div class='nu-score'>
+                  <div class='nu-score-num'>${score}</div>
+                  <div class='nu-score-label'>score</div>
+                </div>
+                <div class='nu-actions'>
+                  <input type='checkbox' class='nu-checkbox' data-action='toggle-complete' data-id='${task.id}' aria-label='Mark ${escapeHtml(task.name)} complete' />
+                  <button class='nu-icon-btn' data-action='start-edit' data-id='${task.id}'>Edit</button>
+                  <button class='nu-icon-btn ${state.confirmDeleteId === task.id ? "nu-icon-btn-danger" : ""}' data-action='request-delete' data-id='${task.id}'>
+                    ${state.confirmDeleteId === task.id ? "Confirm?" : "Delete"}
+                  </button>
+                </div>
+              </div>
+              ${expanded ? `
+                <div class='nu-subtask-panel'>
+                  ${task.subtasks.length > 0 ? `
+                    <div class='nu-subtask-list'>
+                      ${task.subtasks.map(subtask => `
+                        <div class='nu-subtask-item'>
+                          <input type='checkbox' class='nu-checkbox nu-checkbox-sm' data-action='toggle-subtask' data-task-id='${task.id}' data-subtask-id='${subtask.id}' ${subtask.done ? "checked" : ""}>
+                          <span class='${subtask.done ? "nu-subtask-done" : ""}'>${escapeHtml(subtask.text)}</span>
+                          <button class='nu-subtask-del' data-action='delete-subtask' data-task-id='${task.id}' data-subtask-id='${subtask.id}'>×</button>
+                        </div>
+                      `).join("")}
+                    </div>
+                  ` : ""}
+                  <div class='nu-subtask-add'>
+                    <input class='nu-input nu-input-sm' placeholder='Add a step…' value='${escapeHtml(state.subtaskDraft[task.id] || "")}' data-action='subtask-input' data-id='${task.id}'>
+                    <button class='nu-icon-btn' data-action='add-subtask' data-id='${task.id}'>Add step</button>
+                  </div>
+                </div>
+              ` : ""}
+            </div>
+          `;
+        }
+
+        function render() {
+          const active = state.tasks.filter(task => !task.completed && (state.householdEnabled || !task.household));
+          const completed = state.tasks.filter(task => task.completed && (state.householdEnabled || !task.household));
+          const overdueCount = active.filter(task => daysUntil(task.dueDate) < 0).length;
+          const dueThisWeekCount = active.filter(task => {
+            const days = daysUntil(task.dueDate);
+            return days >= 0 && days <= 7;
+          }).length;
+
+          const sortedActive = sortTasks(active, state.sortMode);
+          const startHere = buildStartHere(active);
+          const subjectOptions = Array.from(new Set(state.tasks.map(task => task.subject).filter(Boolean))).sort();
+
+          const loggedTasks = completed.filter(task => task.actualEffort);
+          const averageDifference = loggedTasks.length
+            ? loggedTasks.reduce((sum, task) => sum + (task.actualEffort - task.effort), 0) / loggedTasks.length
+            : 0;
+
+          const insightsSummary = !loggedTasks.length
+            ? null
+            : Math.abs(averageDifference) < 0.35
+              ? "Your effort estimates track pretty closely, on average."
+              : averageDifference > 0
+                ? "You tend to underestimate effort — actual runs about " + averageDifference.toFixed(1) + " level(s) higher than your estimate, on average."
+                : "You tend to overestimate effort — actual runs about " + Math.abs(averageDifference).toFixed(1) + " level(s) lower than your estimate, on average.";
+
+          const groups = state.groupBySubject
+            ? Array.from(sortedActive.reduce((map, task) => {
+                const key = task.subject && task.subject.trim() ? task.subject.trim() : "General";
+                if (!map.has(key)) map.set(key, []);
+                map.get(key).push(task);
+                return map;
+              }, new Map()))
+            : null;
+
+          const activeMarkup = sortedActive.length === 0
+            ? `
+              <div class='nu-empty'>
+                <div class='nu-empty-title'>Board’s clear</div>
+                <div class='nu-empty-sub'>Add an assignment above to start ranking your week.</div>
+              </div>
+            `
+            : groups
+              ? groups.map(([subjectName, groupTasks]) => `
+                  <section>
+                    <div class='nu-group-header'>
+                      <span class='nu-group-dot' style='background:${subjectColor(subjectName)}'></span>
+                      <span class='nu-group-name'>${escapeHtml(subjectName)}</span>
+                      <span class='nu-group-count'>${groupTasks.length}</span>
+                    </div>
+                    ${groupTasks.map((task, idx) => renderTaskRow(task, idx, sortedActive)).join("")}
+                  </section>
+                `).join("")
+              : sortedActive.map((task, idx) => renderTaskRow(task, idx, sortedActive)).join("");
+
+          const completedMarkup = completed.length > 0 ? `
+            <section>
+              <button class='nu-section-toggle' data-action='toggle-completed'>
+                Completed (${completed.length}) ${state.showCompleted ? "▲" : "▼"}
+              </button>
+              ${state.showCompleted ? `
+                <div class='nu-completed-list'>
+                  ${completed.map(task => `
+                    <div class='nu-completed-row'>
+                      <div class='nu-completed-main'>
+                        <span class='nu-completed-name'>${escapeHtml(task.name)}</span>
+                        ${SubjectTag(task.subject)}
+                      </div>
+                      <div class='nu-completed-actual'>
+                        ${
+                          task.actualEffort
+                            ? `<button class='nu-actual-set' data-action='edit-actual' data-id='${task.id}'>
+                                est ${effortMeta(task.effort).label} → actual ${effortMeta(task.actualEffort).label}
+                              </button>`
+                            : state.editingActualId === task.id
+                              ? `
+                                <select class='nu-input nu-input-sm' data-action='save-actual' data-id='${task.id}' autofocus>
+                                  <option value='' disabled selected>Actual effort…</option>
+                                  ${EFFORT_LEVELS.map(item => `<option value='${item.value}'>${item.label} · ${item.hint}</option>`).join("")}
+                                </select>
+                              `
+                              : `<button class='nu-actual-link' data-action='edit-actual' data-id='${task.id}'>+ log actual</button>`
+                        }
+                      </div>
+                      <div class='nu-completed-actions'>
+                        <button class='nu-icon-btn' data-action='toggle-complete' data-id='${task.id}'>Restore</button>
+                        <button class='nu-icon-btn ${state.confirmDeleteId === task.id ? "nu-icon-btn-danger" : ""}' data-action='request-delete' data-id='${task.id}'>
+                          ${state.confirmDeleteId === task.id ? "Confirm?" : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              ` : ""}
+            </section>
+          ` : "";
+
+          const insightMarkup = completed.length > 0 ? `
+            <section>
+              <button class='nu-section-toggle' data-action='toggle-insights'>
+                Insights ${state.showInsights ? "▲" : "▼"}
+              </button>
+              ${state.showInsights ? `
+                <div class='nu-insights-body'>
+                  ${!loggedTasks.length
+                    ? "<div class='nu-insights-empty'>Log actual effort on completed tasks to see estimate accuracy here.</div>"
+                    : `
+                      <div class='nu-insights-summary'>${insightsSummary}</div>
+                      ${loggedTasks.map(task => {
+                        const difference = task.actualEffort - task.effort;
+                        return `<div class='nu-insights-row'>${escapeHtml(task.name)} — est ${effortMeta(task.effort).label} → actual ${effortMeta(task.actualEffort).label} (${difference >= 0 ? "+" : ""}${difference})</div>`;
+                      }).join("")}
+                    `}
+                </div>
+              ` : ""}
+            </section>
+          ` : "";
+
+          root.innerHTML = `
+            <main class='nu-app'>
+              <datalist id='nu-subjects'>
+                ${subjectOptions.map(value => `<option value='${escapeHtml(value)}'></option>`).join("")}
+              </datalist>
+
+              <header class='nu-header'>
+                <div>
+                  <h1 class='nu-title'>Next<span>Up</span></h1>
+                  <p class='nu-subtitle'>Weekly Task Board</p>
+                </div>
+                <div class='nu-stats'>
+                  <div class='nu-stat'>
+                    <span class='nu-stat-num'>${active.length}</span>
+                    <span class='nu-stat-label'>On board</span>
+                  </div>
+                  <div class='nu-stat nu-stat-danger'>
+                    <span class='nu-stat-num'>${overdueCount}</span>
+                    <span class='nu-stat-label'>Overdue</span>
+                  </div>
+                  <div class='nu-stat'>
+                    <span class='nu-stat-num'>${dueThisWeekCount}</span>
+                    <span class='nu-stat-label'>This week</span>
+                  </div>
+                </div>
+              </header>
+
+              ${state.saveError ? `<div class='nu-save-error' role='alert'>Couldn’t save your last change. Check available browser storage, then try editing again.</div>` : ""}
+
+              <details class='nu-howto' ${state.tasks.length === 0 ? "open" : ""}>
+                <summary>New here? How NextUp works</summary>
+                <ol>
+                  <li>Add a task with its name, due date, and how long it will take.</li>
+                  <li>Read the Start here box. It suggests what to work on first and why.</li>
+                  <li>Check tasks off as you finish them, and change the sort if you like.</li>
+                </ol>
+                <p>NextUp only looks at due dates and effort. It cannot tell how important a task is, and it does not give academic, medical, legal, or financial advice. Please review its suggestions and plan your own way.</p>
+              </details>
+
+              <section class='nu-household-panel'>
+                <div>
+                  <div class='nu-household-title'>Household chores</div>
+                  <div class='nu-household-sub'>Fold a preset weekly cleaning schedule into the board, or leave it off to track school and work only.</div>
+                </div>
+                <div class='nu-household-controls'>
+                  ${state.householdEnabled ? `<button class='nu-icon-btn' data-action='reset-household'>Reset chores</button>` : ""}
+                  <button class='nu-switch ${state.householdEnabled ? "on" : ""}' data-action='toggle-household' role='switch' aria-checked='${state.householdEnabled}'>
+                    <span class='nu-switch-knob'></span>
+                  </button>
+                </div>
+              </section>
+
+              <form class='nu-panel' id='task-form'>
+                <div class='nu-field-row'>
+                  <div class='nu-field nu-field-name'>
+                    <label class='nu-label' for='nu-name'>Assignment</label>
+                    <input id='nu-name' class='nu-input' placeholder='e.g. Chem lab report' value='${escapeHtml(state.name)}' data-field='name'>
+                  </div>
+                  <div class='nu-field'>
+                    <label class='nu-label' for='nu-subject'>Subject</label>
+                    <input id='nu-subject' class='nu-input' list='nu-subjects' placeholder='e.g. Chemistry' value='${escapeHtml(state.subject)}' data-field='subject'>
+                  </div>
+                  <div class='nu-field'>
+                    <label class='nu-label' for='nu-date'>Due date</label>
+                    <input id='nu-date' class='nu-input' type='date' value='${state.dueDate}' data-field='dueDate'>
+                  </div>
+                  <div class='nu-field'>
+                    <label class='nu-label' for='nu-effort'>Effort</label>
+                    <select id='nu-effort' class='nu-input' data-field='effort'>
+                      ${EFFORT_LEVELS.map(item => `<option value='${item.value}' ${item.value === Number(state.effort) ? "selected" : ""}>${item.label} · ${item.hint}</option>`).join("")}
+                    </select>
+                  </div>
+                  <button class='nu-btn nu-btn-primary' type='submit'>Add to board</button>
+                </div>
+                <p class='nu-form-note'>Please do not enter private or sensitive information, such as passwords, ID numbers, or health or financial details.</p>
+                ${state.formError ? `<div class='nu-form-error' role='alert'>${state.formError}</div>` : ""}
+              </form>
+
+              ${startHere ? `
+                <section class='nu-start' aria-live='polite'>
+                  <div class='nu-start-top'>
+                    <span class='nu-start-badge'>Suggestion</span>
+                    <span class='nu-start-label'>Start here</span>
+                  </div>
+                  <h2 class='nu-start-headline'>${escapeHtml(startHere.headline)}</h2>
+                  <p class='nu-start-reason'>${escapeHtml(startHere.reason)}</p>
+                  ${startHere.onlyChores ? `<p class='nu-start-next'>Your board only has household chores right now.</p>` : ""}
+                  ${startHere.nextTasks.length ? `<p class='nu-start-next'>Then: ${startHere.nextTasks.map(item => `“${escapeHtml(item.name)}” (${item.due})`).join(", ")}.</p>` : ""}
+                  ${startHere.notes.map(note => `<p class='nu-start-note' role='alert'>${escapeHtml(note)}</p>`).join("")}
+                  <details class='nu-start-how'>
+                    <summary>How is this chosen?</summary>
+                    <p>Score = urgency (1–5) × 5 + effort (1–5). Urgency is 5 if a task is overdue or due today, 4 for 1–2 days, 3 for 3–4 days, 2 for 5–7 days, and 1 for 8+ days. Ties go to the earlier due date.</p>
+                    <p>This suggestion is written by rules built into NextUp, not by a live AI model, and it only looks at due dates and effort. It cannot tell how much a task matters to your grade or your life, and it does not give academic, medical, legal, or financial advice.</p>
+                  </details>
+                  <p class='nu-start-foot'>This is a suggestion based on your current board. Please review it, and sort and plan your own way.</p>
+                </section>
+              ` : ""}
+
+              ${active.length > 0 ? `
+                <div class='nu-sort-row'>
+                  <span class='nu-sort-label'>Sort</span>
+                  <div class='nu-sort-toggle'>
+                    <button class='nu-sort-btn ${state.sortMode === "score" ? "active" : ""}' data-action='sort' data-mode='score'>Priority score</button>
+                    <button class='nu-sort-btn ${state.sortMode === "effort-desc" ? "active" : ""}' data-action='sort' data-mode='effort-desc'>Most effort first</button>
+                    <button class='nu-sort-btn ${state.sortMode === "effort-asc" ? "active" : ""}' data-action='sort' data-mode='effort-asc'>Least effort first</button>
+                  </div>
+                  <button class='nu-group-toggle ${state.groupBySubject ? "active" : ""}' data-action='toggle-group'>Group by subject</button>
+                </div>
+              ` : ""}
+
+              <div class='nu-list'>
+                ${activeMarkup}
+              </div>
+
+              ${completedMarkup}
+              ${insightMarkup}
+            </main>
+          `;
+
+          bindEvents();
+        }
+
+        function bindEvents() {
+          const form = document.getElementById("task-form");
+          if (form) {
+            form.addEventListener("submit", event => {
+              event.preventDefault();
+              handleAdd();
+            });
+          }
+
+          const nameInput = document.querySelector('[data-field="name"]');
+          if (nameInput) {
+            nameInput.addEventListener("input", event => {
+              state.name = event.target.value;
+            });
+          }
+
+          const subjectInput = document.querySelector('[data-field="subject"]');
+          if (subjectInput) {
+            subjectInput.addEventListener("input", event => {
+              state.subject = event.target.value;
+            });
+          }
+
+          const dueInput = document.querySelector('[data-field="dueDate"]');
+          if (dueInput) {
+            dueInput.addEventListener("input", event => {
+              state.dueDate = event.target.value;
+            });
+          }
+
+          const effortInput = document.querySelector('[data-field="effort"]');
+          if (effortInput) {
+            effortInput.addEventListener("change", event => {
+              state.effort = Number(event.target.value);
+            });
+          }
+
+          document.querySelectorAll("[data-action='toggle-household']").forEach(button => {
+            button.addEventListener("click", toggleHousehold);
+          });
+
+          document.querySelectorAll("[data-action='reset-household']").forEach(button => {
+            button.addEventListener("click", resetHousehold);
+          });
+
+          document.querySelectorAll("[data-action='sort']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.sortMode = button.dataset.mode;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-group']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.groupBySubject = !state.groupBySubject;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-complete']").forEach(button => {
+            button.addEventListener("click", () => toggleComplete(button.dataset.id));
+          });
+
+          document.querySelectorAll("[data-action='toggle-expand']").forEach(button => {
+            button.addEventListener("click", () => {
+              const id = button.dataset.id;
+              state.expanded[id] = !state.expanded[id];
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='start-edit']").forEach(button => {
+            button.addEventListener("click", () => {
+              const task = state.tasks.find(item => item.id === button.dataset.id);
+              if (task) startEdit(task);
+            });
+          });
+
+          document.querySelectorAll("[data-action='cancel-edit']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.editingId = null;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='save-edit']").forEach(button => {
+            button.addEventListener("click", saveEdit);
+          });
+
+          document.querySelectorAll("[data-action='edit-name']").forEach(input => {
+            input.addEventListener("input", event => {
+              state.editDraft.name = event.target.value;
+            });
+          });
+
+          document.querySelectorAll("[data-action='edit-subject']").forEach(input => {
+            input.addEventListener("input", event => {
+              state.editDraft.subject = event.target.value;
+            });
+          });
+
+          document.querySelectorAll("[data-action='edit-date']").forEach(input => {
+            input.addEventListener("input", event => {
+              state.editDraft.dueDate = event.target.value;
+            });
+          });
+
+          document.querySelectorAll("[data-action='edit-effort']").forEach(select => {
+            select.addEventListener("change", event => {
+              state.editDraft.effort = event.target.value;
+            });
+          });
+
+          document.querySelectorAll("[data-action='request-delete']").forEach(button => {
+            button.addEventListener("click", () => requestDelete(button.dataset.id));
+          });
+
+          document.querySelectorAll("[data-action='add-subtask']").forEach(button => {
+            button.addEventListener("click", () => addSubtask(button.dataset.id));
+          });
+
+          document.querySelectorAll("[data-action='subtask-input']").forEach(input => {
+            input.addEventListener("input", event => {
+              const id = input.dataset.id;
+              state.subtaskDraft[id] = event.target.value;
+            });
+
+            input.addEventListener("keydown", event => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                addSubtask(input.dataset.id);
+              }
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-subtask']").forEach(input => {
+            input.addEventListener("change", () => {
+              toggleSubtask(input.dataset.taskId, input.dataset.subtaskId);
+            });
+          });
+
+          document.querySelectorAll("[data-action='delete-subtask']").forEach(button => {
+            button.addEventListener("click", () => {
+              deleteSubtask(button.dataset.taskId, button.dataset.subtaskId);
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-completed']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.showCompleted = !state.showCompleted;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-insights']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.showInsights = !state.showInsights;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='edit-actual']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.editingActualId = button.dataset.id;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='save-actual']").forEach(select => {
+            select.addEventListener("change", event => {
+              setActualEffort(select.dataset.id, event.target.value);
+            });
+          });
+
+          document.querySelectorAll("[data-action='save-actual']").forEach(select => {
+            select.addEventListener("blur", () => {
+              if (!select.value) {
+                state.editingActualId = null;
+                render();
+              }
+            });
+          });
+        }
+
+        function escapeHtml(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        render();
+      }
+
+      App();
+    </script>
+  </body>
+</html>
