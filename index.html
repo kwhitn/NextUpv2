@@ -466,6 +466,7 @@
         font-family: "IBM Plex Mono", monospace;
       }
       .nu-score-label { color: var(--dim); font-size: 0.55rem; }
+      .nu-scores-hidden .nu-score { display: none; }
 
       .nu-actions, .nu-completed-actions {
         display: flex;
@@ -721,7 +722,7 @@
           const due = new Date(today);
           due.setDate(due.getDate() + offsetDays);
           return {
-            id: `hh-${name.toLowerCase().replace(/\s+/g, "-")}`,
+            id: `hh-${name.toLowerCase().replace(/\\s+/g, "-")}`,
             name,
             subject: "Household",
             dueDate: due.getFullYear() + "-" + String(due.getMonth() + 1).padStart(2, "0") + "-" + String(due.getDate()).padStart(2, "0"),
@@ -813,23 +814,6 @@
         return "takes " + effort.label.toLowerCase() + " effort (" + effort.hint + ")";
       }
 
-      function isVagueName(name) {
-        const clean = (name || "").trim().toLowerCase();
-        if (clean.length < 4 || /^(stuff|things?|work|misc|task|tasks|todo|homework|hw|assignment)$/.test(clean)) return true;
-        const letters = clean.replace(/[^a-z]/g, "");
-        if (!letters.length) return true;                       // no letters at all, such as 12345
-        if (/(.)\1\1/.test(clean)) return true;                  // the same character three times in a row
-        if (letters.length >= 5 && !/[aeiouy]/.test(letters)) return true;   // long name with no vowels
-        const rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];     // keyboard mashing such as asdfg
-        for (const row of rows) {
-          const backwards = row.split("").reverse().join("");
-          for (let i = 0; i + 5 <= row.length; i++) {
-            if (clean.includes(row.slice(i, i + 5)) || clean.includes(backwards.slice(i, i + 5))) return true;
-          }
-        }
-        return false;
-      }
-
       // Guardrail: a task name that reads like a question or an instruction to the app
       function asksForAdvice(name) {
         return /\b(ignore (your|the|all|previous) (rules|instructions)|tell me (which|what|how|if)|should i|what should i|can you (tell|give|recommend))\b/i.test(name || "");
@@ -849,7 +833,7 @@
           reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ", and it's the only task on your board, so start there.";
         } else if (computeScore(second) === topScore) {
           const sameDate = second.dueDate === top.dueDate;
-          reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ". It ties with “" + second.name + "” on priority score, " +
+          reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ". It ties with \u201C" + second.name + "\u201D on priority score, " +
             (sameDate ? "and both are due the same day, so I kept the order they appear in your list." : "but it's due earlier, so it goes first.");
         } else {
           reason = "It's " + dueText(topDays) + " and " + effortPhrase(effort) + ", which gives it the highest priority on your board.";
@@ -861,16 +845,14 @@
         const notes = [];
         ranked.slice(0, 3).forEach(task => {
           if (daysUntil(task.dueDate) < -365) {
-            notes.push("Check the due date for “" + task.name + "”. It's more than a year in the past, which may be a typo. Use Edit to fix it.");
+            notes.push("Check the due date for \u201C" + task.name + "\u201D. It's more than a year in the past, which may be a typo. Use Edit to fix it.");
           }
           if (asksForAdvice(task.name)) {
-            notes.push("“" + task.name + "” reads like a question or a request, not a task. NextUp cannot give that kind of advice, so please rename it if this is a task.");
-          } else if (isVagueName(task.name)) {
-            notes.push("“" + task.name + "” is a vague task name. A clearer name makes this suggestion easier to trust.");
+            notes.push("\u201C" + task.name + "\u201D reads like a question or a request, not a task. NextUp cannot give that kind of advice, so please rename it if this is a task.");
           }
         });
 
-        return { headline: "Start with “" + top.name + "”", reason, nextTasks, notes, onlyChores: ranked.every(task => task.household) };
+        return { headline: "Start with \u201C" + top.name + "\u201D", reason, nextTasks, notes, onlyChores: ranked.every(task => task.household) };
       }
 
       function normalizeTask(task) {
@@ -941,6 +923,7 @@
           householdEnabled: readSettings().householdEnabled,
           sortMode: "score",
           groupBySubject: false,
+          showScores: false,
           name: "",
           subject: "",
           dueDate: "",
@@ -1406,7 +1389,7 @@
           ` : "";
 
           root.innerHTML = `
-            <main class='nu-app'>
+            <main class='nu-app ${state.showScores ? "" : "nu-scores-hidden"}'>
               <datalist id='nu-subjects'>
                 ${subjectOptions.map(value => `<option value='${escapeHtml(value)}'></option>`).join("")}
               </datalist>
@@ -1492,11 +1475,11 @@
                   <h2 class='nu-start-headline'>${escapeHtml(startHere.headline)}</h2>
                   <p class='nu-start-reason'>${escapeHtml(startHere.reason)}</p>
                   ${startHere.onlyChores ? `<p class='nu-start-next'>Your board only has household chores right now.</p>` : ""}
-                  ${startHere.nextTasks.length ? `<p class='nu-start-next'>Then: ${startHere.nextTasks.map(item => `“${escapeHtml(item.name)}” (${item.due})`).join(", ") }.</p>` : ""}
+                  ${startHere.nextTasks.length ? `<p class='nu-start-next'>Then: ${startHere.nextTasks.map(item => `\u201C${escapeHtml(item.name)}\u201D (${item.due})`).join(", ")}.</p>` : ""}
                   ${startHere.notes.map(note => `<p class='nu-start-note' role='alert'>${escapeHtml(note)}</p>`).join("")}
                   <details class='nu-start-how'>
                     <summary>How is this chosen?</summary>
-                    <p>Score = urgency (1–5) × 5 + effort (1–5). Urgency is 5 if a task is overdue or due today, 4 for 1–2 days, 3 for 3–4 days, 2 for 5–7 days, and 1 for 8+ days. Ties go to the earlier due date.</p>
+                    <p>Score = urgency (1\u20135) \u00D7 5 + effort (1\u20135). Urgency is 5 if a task is overdue or due today, 4 for 1\u20132 days, 3 for 3\u20134 days, 2 for 5\u20137 days, and 1 for 8+ days. Ties go to the earlier due date.</p>
                     <p>This suggestion is written by rules built into NextUp, not by a live AI model, and it only looks at due dates and effort. It cannot tell how much a task matters to your grade or your life, and it does not give academic, medical, legal, or financial advice.</p>
                   </details>
                   <p class='nu-start-foot'>This is a suggestion based on your current board. Please review it, and sort and plan your own way.</p>
@@ -1512,6 +1495,7 @@
                     <button class='nu-sort-btn ${state.sortMode === "effort-asc" ? "active" : ""}' data-action='sort' data-mode='effort-asc'>Least effort first</button>
                   </div>
                   <button class='nu-group-toggle ${state.groupBySubject ? "active" : ""}' data-action='toggle-group'>Group by subject</button>
+                  <button class='nu-group-toggle ${state.showScores ? "active" : ""}' data-action='toggle-scores'>${state.showScores ? "Hide scores" : "Show scores"}</button>
                 </div>
               ` : ""}
 
@@ -1582,6 +1566,13 @@
           document.querySelectorAll("[data-action='toggle-group']").forEach(button => {
             button.addEventListener("click", () => {
               state.groupBySubject = !state.groupBySubject;
+              render();
+            });
+          });
+
+          document.querySelectorAll("[data-action='toggle-scores']").forEach(button => {
+            button.addEventListener("click", () => {
+              state.showScores = !state.showScores;
               render();
             });
           });
@@ -1716,7 +1707,7 @@
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
+            .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
         }
 
